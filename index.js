@@ -17,7 +17,7 @@ app.use((req, res, next) => {
 	next();
 });
 
-const db = require("./models");
+//const db = require("./models");
 
 //COnsider routing through the authRouter
 
