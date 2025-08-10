@@ -5,7 +5,7 @@
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
-const { DataTypes } = require('sequelize');
+const { DataTypes, Sequelize } = require('sequelize');
 //const env = process.env.NODE_ENV || 'development';
 const sequelize = require(__dirname + '/../config/database');
 const basename = path.basename(__filename);
@@ -26,7 +26,7 @@ const db = {};
 //     );
 // }
 
-sequelize.options.logging = true;
+//sequelize.options.logging = true;
 sequelize.options.logging = console.log;
 
 //Loading all models in the folder, .js file types
@@ -47,5 +47,6 @@ Object.keys(db).forEach(modelName => {
 });
 
 db.sequelize = sequelize;
+db.Sequelize = Sequelize;
 
 module.exports = db;

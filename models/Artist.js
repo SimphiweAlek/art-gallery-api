@@ -1,5 +1,3 @@
-const { DataTypes } = require("sequelize");
-
 module.exports = (sequelize, DataTypes) => {
     const Artist = sequelize.define("Artist", {
         ID: {
@@ -25,4 +23,4 @@ module.exports = (sequelize, DataTypes) => {
     };
 
     return Artist;
-}
+};

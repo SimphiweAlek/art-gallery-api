@@ -1,5 +1,3 @@
-const { DataTypes } = require("sequelize");
-
 module.exports = (sequelize, DataTypes) => {
     const ArtPiece = sequelize.define("ArtPiece", {
         ID: {
@@ -46,5 +44,5 @@ module.exports = (sequelize, DataTypes) => {
         );
     };
 
-    return ArtPieces;
-}
+    return ArtPiece;
+};

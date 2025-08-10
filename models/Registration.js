@@ -1,5 +1,3 @@
-const { DataTypes } = require("sequelize");
-
 module.exports = (sequelize, DataTypes) => {
     const Registration = sequelize.define("Registration", {
         ID: {
@@ -14,7 +12,7 @@ module.exports = (sequelize, DataTypes) => {
         },
         CheckedIn:{
             type: DataTypes.BOOLEAN,
-            defaultValue: "false"
+            defaultValue: false
         },
     });
 
@@ -25,10 +23,10 @@ module.exports = (sequelize, DataTypes) => {
         Registration.belongsTo(models.Exhibition, {
             foreignKey: "ExhibitionID"
         });
-        Registration.hasMany(models.Attendee, {
-            foreignKey: "RegistrationID"
-        });
+        // Registration.hasMany(models.Attendee, {
+        //     foreignKey: "RegistrationID"
+        // });
     };
 
     return Registration;
-}
+};

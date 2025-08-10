@@ -26,8 +26,8 @@ const db = require("./models");
 
 //Start API and listen...
 db.sequelize.sync().then(() => {
-
+	//TODO: API auto-terminates after a few seconds, Look into that!!
     app.listen(process.env.PORT, () => {
-        console.log("server running on port 3001...")
+        console.log("server running on port 3306...")
     });
 });

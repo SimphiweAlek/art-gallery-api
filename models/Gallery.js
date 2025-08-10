@@ -27,9 +27,9 @@ module.exports = (sequelize, DataTypes) => {
             onDelete: "CASCADE"
         });
 
-        Gallery.hasMany(models.Artwork, {
+        Gallery.hasMany(models.ArtPiece, {
             foreignKey: "GalleryID",
-            as: "Artworks",
+            as: "Artpieces",
             onDelete: "CASCADE"
         });
 
@@ -41,4 +41,4 @@ module.exports = (sequelize, DataTypes) => {
     };
 
     return Gallery;
-}
+};
