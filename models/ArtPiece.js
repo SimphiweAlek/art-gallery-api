@@ -1,8 +1,12 @@
 const { DataTypes } = require("sequelize");
-const { sequelize } = require(".");
 
 module.exports = (sequelize, DataTypes) => {
     const ArtPiece = sequelize.define("ArtPiece", {
+        ID: {
+            type: DataTypes.INTEGER,
+            autopIncrement: true,
+            primaryKey: true
+        },
         Title:{
             type: DataTypes.STRING,
             allowNull: false
@@ -14,6 +18,14 @@ module.exports = (sequelize, DataTypes) => {
         EstimatedValue:{
             type: DataTypes.FLOAT,
             allowNull: false
+        },
+        Year:{
+            type: DataTypes.SMALLINT,
+            allowNull: true
+        },
+        Dimensions:{
+            type: DataTypes.STRING,
+            allowNull: true
         },
         AvailStatus:{
             type: DataTypes.ENUM("Available", "Unavailable"),

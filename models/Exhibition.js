@@ -1,8 +1,12 @@
 const { DataTypes } = require("sequelize");
-const { sequelize } = require(".");
 
 module.exports = (sequelize, DataTypes) => {
     const Exhibition = sequelize.define("Exhibtion", {
+        ID: {
+            type: DataTypes.INTEGER,
+            autopIncrement: true,
+            primaryKey: true
+        },
         Name:{
             type: DataTypes.STRING,
             allowNull: false
@@ -20,6 +24,14 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.INTEGER,
             allowNull: false,
             defaultvalue: 0 //current visitor counter, starts at zero
+        },
+        StartDate:{
+            type: DataTypes.DATE, //Rmmbr to ask for start/end time from FrontEnd
+            allowNull: false
+        },
+        EndDate:{
+            type: DataTypes.DATE,
+            allowNull: false
         },
         Status:{
             type: DataTypes.ENUM("Open", "Full", "Closed"),

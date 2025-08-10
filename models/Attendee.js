@@ -1,12 +1,18 @@
-const { sequelize } = require(".");
 
 module.exports = (sequelize, DataTypes) => {
+    //This Model is no longer required
+    
     const Attendee = sequelize.define("Attendee", {
-        Name:{
+        ID: {
+            type: DataTypes.INTEGER,
+            autopIncrement: true,
+            primaryKey: true
+        },
+        FullName:{
             Type: DataTypes.STRING,
             allowNull: false
         },
-        Phone:{
+        Email:{
             type: DataTypes.STRING,
             allowNull: false
         }

@@ -1,8 +1,12 @@
 const { DataTypes } = require("sequelize");
-const { sequelize } = require(".");
 
 module.exports = (sequelize, DataTypes) => {
     const User = sequelize.define("User", {
+        ID: {
+            type: DataTypes.INTEGER,
+            autopIncrement: true,
+            primaryKey: true
+        },
         FullName:{
             type: DataTypes.STRING, 
             allowNull: false,
@@ -12,12 +16,16 @@ module.exports = (sequelize, DataTypes) => {
             allowNull: false,
             unique: true
         },
+        Phone:{
+            type: DataTypes.STRING,
+            allowNull: false
+        },
         Password:{
             type: DataTypes.STRING, 
             allowNull: false
         },
         Role:{
-            type: DataTypes.ENUM("Owner", "Manager", "Clerk"),
+            type: DataTypes.ENUM("Owner", "Manager", "Clerk", "Artist", "Visitor"),
             allowNull: false
         }
     });
@@ -30,18 +38,25 @@ module.exports = (sequelize, DataTypes) => {
             onDelete: "CASCADE"
         });
 
+        //If user is a Manager (Monitors/Reports on Artpieces and Exhibitions)
+        User.hasMany(models.Gallery, {
+            foreignKey: "ManagerID", //Accesses Exhibition & ArtPiece models trhough gallery model
+            as: "ManagedGalleries",
+            onDelete: "SET NULL"
+        })
+
         //If user in an Artist
-        User.hasMany(models.ArtPiece, {
-            foreignKey: "artistID",
-            as: "Artworks",
+        User.hasMany(models.Artist, {
+            foreignKey: "UserID",
+            as: "ArtistProfile",
             onDelete: "CASCADE"
         });
 
-        //If user is a visitor, join table
-        User.belongsToMany(models.Exhibition, {
-            through: models.VisitorRegistration,
+        //If user is a visitor
+        User.hasMany(models.Registration, {
             foreignKey: "UserID",
-            as: "RegisteredExhibitions"
+            as: "VisitorProfile",
+            onDelete: "CASCADE"
         });
 
         //Notifications

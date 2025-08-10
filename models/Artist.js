@@ -1,16 +1,20 @@
 const { DataTypes } = require("sequelize");
-const { sequelize } = require(".");
 
 module.exports = (sequelize, DataTypes) => {
     const Artist = sequelize.define("Artist", {
-        Name:{
-            type: DataTypes.STRING,
-            allowNull: false
+        ID: {
+            type: DataTypes.INTEGER,
+            autopIncrement: true,
+            primaryKey: true
         },
         Bio:{
             type: DataTypes.TEXT,
             allowNull: true
         },
+        Nationality:{
+            type: DataTypes.STRING,
+            allowNull: true
+        }
     });
 
     Artist.associate = models => {
