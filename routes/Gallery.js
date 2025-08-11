@@ -32,8 +32,26 @@ router.get("/:ID", async (req, res) => {
 //Create gallery
 router.post("/", async (req, res) => {
     try {
-        //TODO: INclude gallery owner UserID (fk) as a parameter
-        const gallery = await Gallery.create(req.body);
+        //Checking provided parameter
+        const { OwnerID, ...galleryData } = req.body;
+        if (!OwnerID)
+        {
+            return res.status(400).json({ error: "OwnerID is required."});
+        }
+
+        //checking if associated User(Owner) exists
+        const owner = await User.findByPk(OwnerID, { where: { Role: "Owner" }});
+        if (!owner)
+        {
+            return res.status(404).json({ error: "Associated Owner not found."});
+        }
+
+        //Creating new Gallery
+        const gallery = await Gallery.create({
+            OwnerID,
+            ...galleryData
+        });
+        
         res.status(201).json(gallery);
     } catch(err)
     {

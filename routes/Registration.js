@@ -18,7 +18,7 @@ router.get("/", async (req, res) => {
 //Get registration by UserID or ExhibitionID
 router.get("/:UserID/:ExhibitionID", async (req, res) => {
     try {
-        //TODO: Test the line line below!
+        //TODO: Test the line line below! If does not work, consider assigning to req body instead
         const reg = await Registration.findByPk({ where: { UserID: req.params.UserID} || { ExhibitionID: req.params.ExhibitionID },  include: [User, Exhibition] });
         if (!reg) return res.status(404).json({ error: "Registration not found" });
         res.status(200).json(reg);
@@ -33,8 +33,26 @@ router.get("/:UserID/:ExhibitionID", async (req, res) => {
 //Create registration
 router.post("/", async (req, res) => {
     try {
-        //TODO: Include UserID check here
-        const newReg = await Registration.create(req.body);
+        //Checking provided parameter
+        const { UserID, ...regData } = req.body;
+        if(!UserID)
+        {
+            return res.status(400).json({ error: "UserID is required."});
+        }
+
+        //Checking if associated user exists
+        const user = await User.findByPk(UserID);
+        if(!user)
+        {
+            return res.status(404).json({ error: "Associated user does not exist."});
+        }
+
+        //Creating new Registration
+        const newReg = await Registration.create({
+            UserID,
+            ...regData
+        });
+        
         res.status(201).json(newReg);
     } catch(err)
     {

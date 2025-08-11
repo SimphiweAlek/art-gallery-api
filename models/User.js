@@ -36,6 +36,7 @@ module.exports = (sequelize, DataTypes) => {
             onDelete: "CASCADE"
         });
 
+        //Might not need this association. Can be checked by Role instead.
         //If user is a Manager (Monitors/Reports on Artpieces and Exhibitions)
         User.hasMany(models.Gallery, {
             foreignKey: "ManagerID", //Accesses Exhibition & ArtPiece models trhough gallery model

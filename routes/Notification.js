@@ -30,8 +30,26 @@ router.get("/:UserID", async (req, res) => {
 //Create notification
 router.post("/", async (req, res) => {
     try {
-        //TODO: require specific User ID (fk)
-        const notification = await Notification.create(req.body);
+        //Checking provided paramater
+        const { UserID, ...notiData } = req.body;
+        if(!UserID)
+        {
+            return res.status.apply(400).json({ error: "UserID is required."});
+        }
+
+        //Checking if the associated User exists
+        const user = await User.findByPk(UserID);
+        if(!user)
+        {
+            return res.status(404).json({ error: "Associated User not found."});
+        }
+
+        //Creating new Notification
+        const notification = await Notification.create({
+            UserID,
+            ...notiData
+        });
+        
         res.status(201).json(notification);
     } catch(err)
     {

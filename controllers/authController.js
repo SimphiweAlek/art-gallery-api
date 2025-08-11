@@ -9,7 +9,14 @@ const register = async (req, res) => {
         if (!Email || !Password || !FullName || !Phone || !Role) {
 			return res.status(400).json({ error: "Missing field! Please check all your input and try again." });
 		}
-        //TODO: add check for unique email
+        
+        //Checking if user/email already exists
+        const userCheck = await User.findOne({ where: { Email } });
+        if(userCheck)
+        {
+            res.status(400).json({ error: "User already exists."});
+        }
+        //else...
         const hashedPass = await bcrypt.hash(Password, 10);
         const user = await User.create({
             FullName,

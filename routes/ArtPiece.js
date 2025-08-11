@@ -31,8 +31,25 @@ router.get("/:ID", async (req, res) => {
 //Create new art piece
 router.post("/", async (req, res) => {
     try {
-        //TODO: Include checks for artist ID. Required to link to artist
-        const newPiece = await ArtPiece.create(req.body);
+        //Checking provided parameter
+        const { ArtistID, ...artPieceData } = req.body;
+        if (!ArtistID) 
+        {
+            return res.status(400).json({ error: "ArtistID is required."});
+        }
+        //Checking if the associated artist exists
+        const artist = await Artist.findByPk(ArtistID);
+        if (!artist) 
+        {
+            return res.status(404).json({ error: "Associated Artist not found."});
+        }
+
+        //Creating new Art Piece
+        const newPiece = await ArtPiece.create({
+            ArtistID,
+            ...artPieceData
+        });
+
         res.status(201).json(newPiece);
     } catch(err)
     {

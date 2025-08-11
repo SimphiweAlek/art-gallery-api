@@ -17,8 +17,26 @@ router.get("/", async (req, res) => {
 //Create artist profile
 router.post("/", async (req, res) => {
     try {
-        //Consider having UserID fk included as a parameter
-        const artist = await Artist.create(req.body); //Include UserID in body. TODO: include checks here
+        const { UserID, ...artistData } = req.body;
+        //checking provided parameter
+        if (!UserID)
+        {
+            return res.status(400).json({ error: "UserID required."});
+        }
+
+        //Checking if associated User exists
+        const user = await User.findByPk(UserID);
+        if (!User)
+        {
+            return res.status(404).json({ error: "No such user exists in the User table."});
+        }
+
+        //creating new Artist
+        const artist = await Artist.create({
+            UserID,
+            ...artistData
+        });
+        
         res.status(201).json(artist);
     } catch(err)
     {

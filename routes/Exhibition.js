@@ -31,8 +31,26 @@ router.get("/:ID", async (req, res) => {
 //Create exhibition
 router.post("/", async (req, res) => {
     try {
-        //TODO: Include gallery ID as parameter, and check if included
-        const newExhibition = await Exhibition.create(req.body);
+        //Checking provided parameter
+        const { GalleryID, ...exhibitionData} = req.body;
+        if (!GalleryID)
+        {
+            return res.status(400).json({ error: "GalleryID is required."});
+        }
+
+        //Checking if the associated gallery exists
+        const gallery = await Gallery.findByPk(GalleryID);
+        if(!gallery)
+        {
+            return response.status(404).json({ error: "Associated gallery not found."});
+        }
+
+        //creating new Exhibition
+        const newExhibition = await Exhibition.create({
+            GalleryID,
+            ...exhibitionData
+        });
+        
         res.status(200).json(newExhibition);
     } catch(err)
     {

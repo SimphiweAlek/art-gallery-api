@@ -30,8 +30,15 @@ router.get("/:ID", async (req, res) => {
 //Update user
 router.put("/:ID", async (req, res) => {
     try {
-        await User.update(req.body, { where: { ID: req.params.ID } });
-        res.status(200).json({ message: "User updated successfully" });
+        if(req.params.ID)
+        {
+            await User.update(req.body, { where: { ID: req.params.ID } });
+            res.status(200).json({ message: "User updated successfully" });
+        } else
+        {
+            res.status(404).json({ error: "User not found."});
+        }
+        
     } catch(err)
     {
         console.log(err);
@@ -42,8 +49,15 @@ router.put("/:ID", async (req, res) => {
 //Delete user
 router.delete("/:ID", async (req, res) => {
     try {
-        await User.destroy({ where: { ID: req.params.ID } });
-        res.status(200).json({ message: "User deleted successfully" });
+        if(req.params.ID)
+        {
+            await User.destroy({ where: { ID: req.params.ID } });
+            res.status(200).json({ message: "User deleted successfully" });
+        } else
+        {
+            res.status(404).json({ error: "User not found."})
+        }
+       
     } catch(err)
     {
         console.log(err);
