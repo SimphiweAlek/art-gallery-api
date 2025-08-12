@@ -11,7 +11,7 @@ app.use(cors()); //whitelists API
 
 //request structure
 app.use((req, res, next) => {
-	console.log('${req.method}, ${req.url}');
+	console.log(`${req.method}, ${req.url}`);
 	console.log('Headers:', req.headers);
 	console.log('Body:', req.body);
 	next();
@@ -19,15 +19,14 @@ app.use((req, res, next) => {
 
 const db = require("./models");
 
-//COnsider routing through the authRouter
+//Consider routing through the authRouter
 
 //ROUTES
-
 
 //Start API and listen...
 db.sequelize.sync().then(() => {
 	//TODO: API auto-terminates after a few seconds, Look into that!!
     app.listen(process.env.PORT, () => {
-        console.log("server running on port 3306...")
+        console.log("Server running on port 3001...")
     });
 });
