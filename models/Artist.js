@@ -2,8 +2,9 @@ module.exports = (sequelize, DataTypes) => {
     const Artist = sequelize.define("Artist", {
         ID: {
             type: DataTypes.INTEGER,
-            autopIncrement: true,
-            primaryKey: true
+            autoIncrement: true,
+            primaryKey: true,
+            allowNull: false
         },
         Bio:{
             type: DataTypes.TEXT,

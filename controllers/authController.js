@@ -15,7 +15,7 @@ const register = async (req, res) => {
         if(userCheck)
         {
             res.status(400).json({ error: "User already exists."});
-        } console.log("Passed first check");
+        }
         //else...
         const hashedPass = await bcrypt.hash(Password, 10);
         const user = await User.create({
@@ -24,7 +24,7 @@ const register = async (req, res) => {
             Phone,
             Password: hashedPass,
             Role
-        }); console.log("End of DB create");
+        });
         
         res.status(201).json({
             message: "User registered successfully",
@@ -33,7 +33,6 @@ const register = async (req, res) => {
         });
     } catch(err)
     {
-        console.log("Inside catch");
         console.error(err);
         res.status(500).json({ error: "Internal server error"});
     }

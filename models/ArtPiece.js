@@ -2,8 +2,9 @@ module.exports = (sequelize, DataTypes) => {
     const ArtPiece = sequelize.define("ArtPiece", {
         ID: {
             type: DataTypes.INTEGER,
-            autopIncrement: true,
-            primaryKey: true
+            autoIncrement: true,
+            primaryKey: true,
+            allowNull: false
         },
         Title:{
             type: DataTypes.STRING,

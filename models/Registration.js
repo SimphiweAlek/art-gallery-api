@@ -2,8 +2,9 @@ module.exports = (sequelize, DataTypes) => {
     const Registration = sequelize.define("Registration", {
         ID: {
             type: DataTypes.INTEGER,
-            autopIncrement: true,
-            primaryKey: true
+            autoIncrement: true,
+            primaryKey: true,
+            allowNull: false
         },
         numberOfAttendees: {
             type: DataTypes.INTEGER,

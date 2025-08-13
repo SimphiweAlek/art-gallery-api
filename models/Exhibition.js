@@ -2,8 +2,9 @@ module.exports = (sequelize, DataTypes) => {
     const Exhibition = sequelize.define("Exhibition", {
         ID: {
             type: DataTypes.INTEGER,
-            autopIncrement: true,
-            primaryKey: true
+            autoIncrement: true,
+            primaryKey: true,
+            allowNull: false
         },
         Name:{
             type: DataTypes.STRING,
