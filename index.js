@@ -22,17 +22,17 @@ app.use((req, res, next) => {
 const db = require("./models");
 
 //Auth routes
-router.post("/auth/register", authController.register);
-router.post("/auth/login", authController.login);
+app.post("/auth/register", authController.register);
+app.post("/auth/login", authController.login);
 
 //Model routes
-router.use("/users", require("./routes/User"));
-router.use("/artists", require("./routes/Artist"));
-router.use("/artpieces", require("./routes/ArtPiece"));
-router.use("/exhibitions", require("./routes/Exhibition"));
-router.use("/galleries", require("./routes/Gallery"));
-router.use("/notifications", require("./routes/Notification"));
-router.use("/registrations", require("./routes/Registration"));
+app.use("/users", require("./routes/User"));
+app.use("/artists", require("./routes/Artist"));
+app.use("/artpieces", require("./routes/ArtPiece"));
+app.use("/exhibitions", require("./routes/Exhibition"));
+app.use("/galleries", require("./routes/Gallery"));
+app.use("/notifications", require("./routes/Notification"));
+app.use("/registrations", require("./routes/Registration"));
 
 //Start API and listen...
 db.sequelize.sync().then(() => {

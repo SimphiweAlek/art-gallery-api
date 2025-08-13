@@ -15,7 +15,7 @@ const register = async (req, res) => {
         if(userCheck)
         {
             res.status(400).json({ error: "User already exists."});
-        }
+        } console.log("Passed first check");
         //else...
         const hashedPass = await bcrypt.hash(Password, 10);
         const user = await User.create({
@@ -24,17 +24,17 @@ const register = async (req, res) => {
             Phone,
             Password: hashedPass,
             Role
-        });
-
+        }); console.log("End of DB create");
+        
         res.status(201).json({
             message: "User registered successfully",
             id: user.ID,
             role: Role
         });
-
     } catch(err)
     {
-        console.error(error);
+        console.log("Inside catch");
+        console.error(err);
         res.status(500).json({ error: "Internal server error"});
     }
 };
@@ -43,7 +43,7 @@ const register = async (req, res) => {
 const login = async (req, res) => {
     try {
         const { Email, Password } = req.body;
-
+        console.log("Inside login function");
         const user = await User.findOne({ where: { Email } });
         if (!user) return res.status(404).json({ error: "User not found" });
 
