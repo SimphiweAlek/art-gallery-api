@@ -1,5 +1,6 @@
 const express = require("express");
 const bodyParser = require('body-parser');
+const session = require("express-session");
 const cors = require('cors');
 require('dotenv').config();
 const sequelize = require('./config/database');
@@ -9,7 +10,10 @@ const authController = require("./controllers/authController");
 
 const app = express();
 app.use(express.json()); //allows json type parsing
-app.use(cors()); //whitelists API
+app.use(cors({			//whitelists API
+	origin: ["http://localhost:5173"],
+	credentials: true, //allow cookies
+})); 
 
 //request structure logging
 app.use((req, res, next) => {
@@ -21,9 +25,24 @@ app.use((req, res, next) => {
 
 const db = require("./models");
 
+//Dev-Only Session store (dies on end/restart)
+app.use(session({
+	secret: process.env.SESSION_SECRET || "GalleryAPI",
+	resave: false,
+	saveUninitialized: false,
+	cookie: {
+		httpOnly: true,
+		sameSite: "lax",
+		secure: false, //using http not httpS
+		maxAge: 1000*60*10, //10 minutes session length
+	}
+}));
+
 //Auth routes
 app.post("/auth/register", authController.register);
 app.post("/auth/login", authController.login);
+app.post("/auth/logout", authController.logout);
+app.get("/auth/me", authController.me);
 
 //Model routes
 app.use("/users", require("./routes/User"));

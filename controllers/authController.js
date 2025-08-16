@@ -1,5 +1,5 @@
 const bcrypt = require("bcrypt");
-const { User } = require("../models");
+const { User, Artist } = require("../models");
 
 //Register function for all users
 const register = async (req, res) => {
@@ -42,14 +42,31 @@ const register = async (req, res) => {
 const login = async (req, res) => {
     try {
         const { Email, Password } = req.body;
-        console.log("Inside login function");
+        if (!Email || !Password) return res.status(400).json({ message: "Email & Password required."});
+
         const user = await User.findOne({ where: { Email } });
         if (!user) return res.status(404).json({ error: "User not found" });
 
         const validPass = await bcrypt.compare(Password, user.Password);
         if(!validPass) return res.status(401).json({ error: "Invalid Password"});
 
-        res.status(200).json({ message: "Login Successful", user });
+        //Attaching artist ID if user is an Artist
+        let artist = null;
+        if (user.Role === "Artist")
+        {
+            artist = await Artist.findOne({ where: {UserID: user.ID}});
+        }
+
+        //Initializing user's session
+        req.session.user = {
+            ID: user.ID,
+            FullName: user.FullName,
+            Email: user.Email,
+            Role: user.Role,
+            ArtistID: artist ? artist.ID : null //including artist ID if role is artist
+        };
+
+        res.status(200).json({ message: "Login Successful", user: req.session.user });
     } catch(err)
     {
         console.log(err);
@@ -57,4 +74,18 @@ const login = async (req, res) => {
     }
 };
 
-module.exports = { register, login };
+//logout or end session
+const logout = (req, res) => {
+    req.session.destroy(() => {
+        res.clearCookie("connect.sid");
+        res.json({ message: "Logged out."});
+    });
+};
+
+//get current user's session
+const me = (req, res) => {
+    if (!req.session.user) return res.status(401).json({ message: "Not authenticated."});
+    return res.json({ user: req.session.user });
+};
+
+module.exports = { register, login, logout, me };
