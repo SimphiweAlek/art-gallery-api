@@ -18,7 +18,7 @@ function requireRole(...roles) {
 //Checking artist ownership on specific art piece
 async function ensureOwnsArtPiece(req, res, next) {
     try {
-        const { id } = req.params;
+        const { ID } = req.params;
         const user = req.session.user;
         if (!user) return res.status(401).json({ message: "Not authenticated" });
 
@@ -28,7 +28,7 @@ async function ensureOwnsArtPiece(req, res, next) {
         //Artists must own the piece
         if (user.Role !== "Artist") return res.status(403).json({ message: "Not authorized" });
 
-        const piece = await ArtPiece.findByPk(id);
+        const piece = await ArtPiece.findByPk(ID);
         if (!piece) return res.status(404).json({ message: "Art piece not found" });
 
         if (!user.ArtistID || piece.ArtistID !== user.ArtistID) {

@@ -30,7 +30,7 @@ router.get("/:ID", ensureAuth, async (req, res) => {
 });
 
 //Create new art piece
-router.post("/", ensureAuth, requireRole("Artist", "Owner") ,async (req, res) => {
+router.post("/new", ensureAuth, requireRole("Artist", "Owner") ,async (req, res) => {
     try {
         const user = req.session.user; //User session
 
@@ -64,7 +64,7 @@ router.post("/", ensureAuth, requireRole("Artist", "Owner") ,async (req, res) =>
 });
 
 //Update art piece
-router.put("/:ID", ensureAuth, requireRole("Artist", "Owner", "Clerk"), async (req, res) => {
+router.put("update/:ID", ensureAuth, requireRole("Artist", "Owner", "Clerk"), async (req, res) => {
     try {
         await ArtPiece.update(req.body, { where: { ID: req.params.ID } });
         res.status(200).json({ message: "Art piece updated successfully" });
@@ -80,18 +80,27 @@ router.get("/mine", ensureAuth, requireRole("Artist"), ensureOwnsArtPiece, async
     try {
         const { ArtistID } = req.session.user;
         if (!ArtistID) return res.status(404).json({ message: "Artist not found." });
+
         const pieces = await ArtPiece.findAll({ where: { ArtistID } });
+
         res.status(200).json(pieces);
-    } catch (err) {
+    } catch (err){
         console.error(err);
         res.status(500).json({ message: "Failed to fetch art pieces" });
     }
 })
 
 //Delete art piece
-router.delete("/:ID", ensureAuth, requireRole("Artist", "Owner"), async (req, res) => {
+router.delete("/:ID", ensureAuth, requireRole("Artist", "Owner"), ensureOwnsArtPiece, async (req, res) => {
     try {
+        const art = await ArtPiece.findByPk(req.params.ID);
+
+        if (!art) {
+            return res.status(404).json({ error: "Artwork not found." });
+        }
+
         await ArtPiece.destroy({ where: { ID: req.params.ID } });
+
         res.status(200).json({ message: "Art piece deleted successfully" });
     } catch(err)
     {
