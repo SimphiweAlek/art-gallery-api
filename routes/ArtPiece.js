@@ -32,7 +32,6 @@ router.get("/:ID", ensureAuth, async (req, res) => {
 //Create new art piece
 router.post("/new", ensureAuth, requireRole("Artist", "Owner") ,async (req, res) => {
     try {
-        const user = req.session.user; //User session
 
         //Checking provided parameter
         const { ArtistID, ...artPieceData } = req.body;
@@ -41,17 +40,17 @@ router.post("/new", ensureAuth, requireRole("Artist", "Owner") ,async (req, res)
             return res.status(400).json({ error: "ArtistID is required."});
         }
         //Checking if the associated artist exists
-        const artist = await Artist.findByPk(ArtistID);
+        const artist = await Artist.findByPk(artistID);
         if (!artist) 
         {
             return res.status(404).json({ error: "Associated Artist not found."});
         }
 
-        req.session.user.ArtistID = ArtistID; //update session cache if artist existss
+        req.session.user.ArtistID = artistID; //update session cache if artist existss
 
         //Creating new Art Piece
         const newPiece = await ArtPiece.create({
-            ArtistID,
+            artistID,
             ...artPieceData
         });
 
@@ -76,10 +75,10 @@ router.put("update/:ID", ensureAuth, requireRole("Artist", "Owner", "Clerk"), as
 });
 
 //List my art pieces (Artist only)
-router.get("/mine", ensureAuth, requireRole("Artist"), ensureOwnsArtPiece, async (req, res) => {
+router.get("/my", ensureAuth, requireRole("Artist"), ensureOwnsArtPiece, async (req, res) => {
     try {
-        const { ArtistID } = req.session.user;
-        if (!ArtistID) return res.status(404).json({ message: "Artist not found." });
+        const { ArtistID } = req.session.user?.ArtistID;
+        if (!ArtistID) return res.status(404).json({ message: "Artist not found or not logged in." });
 
         const pieces = await ArtPiece.findAll({ where: { ArtistID } });
 

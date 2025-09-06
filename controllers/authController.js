@@ -25,11 +25,24 @@ const register = async (req, res) => {
             Password: hashedPass,
             Role
         });
+
+        let artist = null;
+
+        //if user is an artist, auto creating artist profile as well
+        if (Role == "Artist")
+        {
+            artist = await Artist.create({
+                ID: user.ID,
+                Bio: "",    //To modify later
+                Nationality: ""
+            });
+        }
         
         res.status(201).json({
             message: "User registered successfully",
             id: user.ID,
-            role: Role
+            role: Role,
+            ArtistID: artist ? artist.ID : null
         });
     } catch(err)
     {

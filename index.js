@@ -34,7 +34,7 @@ app.use(session({
 		httpOnly: true,
 		sameSite: "lax",
 		secure: false, //using http not httpS
-		maxAge: 1000*60*10, //10 minutes session length
+		maxAge: 1000*60*5, //10 minutes session length
 	}
 }));
 
