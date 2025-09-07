@@ -29,10 +29,10 @@ const register = async (req, res) => {
         let artist = null;
 
         //if user is an artist, auto creating artist profile as well
-        if (Role == "Artist")
+        if (Role === "Artist")
         {
             artist = await Artist.create({
-                ID: user.ID,
+                UserID: user.ID,
                 Bio: "",    //To modify later
                 Nationality: ""
             });

@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { ArtPiece, Artist, Exhibition } = require("../models");
+const { ArtPiece, Artist, Exhibition, Gallery } = require("../models");
 const { ensureAuth, requireRole, ensureOwnsArtPiece } = require("../middleware/auth");
 
 //Get all art pieces and their assigned exhibitions
@@ -8,20 +8,6 @@ router.get("/", ensureAuth ,async (req, res) => {
     try {
         const pieces = await ArtPiece.findAll({ include: [Artist, Exhibition] });
         res.status(200).json(pieces);
-    } catch(err)
-    {
-        console.log(err);
-        res.status(500).json({ error: "Internal server error." });
-    }
-});
-
-//Get single art piece by ID
-router.get("/:ID", ensureAuth, async (req, res) => {
-    try {
-        const piece = await ArtPiece.findByPk(req.params.ID, { include: [Artist, Exhibition] });
-        if (!piece) return res.status(404).json({ error: "Art piece not found" });
-
-        res.status(200).json(piece);
     } catch(err)
     {
         console.log(err);
@@ -40,17 +26,17 @@ router.post("/new", ensureAuth, requireRole("Artist", "Owner") ,async (req, res)
             return res.status(400).json({ error: "ArtistID is required."});
         }
         //Checking if the associated artist exists
-        const artist = await Artist.findByPk(artistID);
+        const artist = await Artist.findByPk(ArtistID);
         if (!artist) 
         {
             return res.status(404).json({ error: "Associated Artist not found."});
         }
 
-        req.session.user.ArtistID = artistID; //update session cache if artist existss
+        req.session.user.ArtistID = ArtistID; //update session cache if artist existss
 
         //Creating new Art Piece
         const newPiece = await ArtPiece.create({
-            artistID,
+            ArtistID,
             ...artPieceData
         });
 
@@ -63,10 +49,14 @@ router.post("/new", ensureAuth, requireRole("Artist", "Owner") ,async (req, res)
 });
 
 //Update art piece
-router.put("update/:ID", ensureAuth, requireRole("Artist", "Owner", "Clerk"), async (req, res) => {
+router.put("/update/:ID", ensureAuth, requireRole("Artist", "Owner", "Clerk"), async (req, res) => {
     try {
         await ArtPiece.update(req.body, { where: { ID: req.params.ID } });
-        res.status(200).json({ message: "Art piece updated successfully" });
+
+        const ArtistID = req.session.user?.ArtistID;
+
+        const updatedPieces = await ArtPiece.findAll({ where: { ArtistID }}, { include: [Artist, Gallery, Exhibition] });
+        res.status(200).json(updatedPieces);
     } catch(err)
     {
         console.log(err);
@@ -75,19 +65,35 @@ router.put("update/:ID", ensureAuth, requireRole("Artist", "Owner", "Clerk"), as
 });
 
 //List my art pieces (Artist only)
-router.get("/my", ensureAuth, requireRole("Artist"), ensureOwnsArtPiece, async (req, res) => {
+router.get("/my", ensureAuth, requireRole("Artist"), async (req, res) => {
     try {
-        const { ArtistID } = req.session.user?.ArtistID;
+        console.log("My artpieces triggered.");
+        const ArtistID = req.session.user?.ArtistID;
         if (!ArtistID) return res.status(404).json({ message: "Artist not found or not logged in." });
 
-        const pieces = await ArtPiece.findAll({ where: { ArtistID } });
+        const pieces = await ArtPiece.findAll({ where: { ArtistID }}, { include: [Artist, Gallery, Exhibition] });
 
         res.status(200).json(pieces);
     } catch (err){
         console.error(err);
         res.status(500).json({ message: "Failed to fetch art pieces" });
     }
-})
+});
+
+//Get single art piece by ID
+router.get("/:ID", ensureAuth, async (req, res) => {
+    try {
+        console.log("Single artpiece fetch triggered.");
+        const piece = await ArtPiece.findByPk(req.params.ID, { include: [Artist, Exhibition] });
+        if (!piece) return res.status(404).json({ error: "Art piece not found" });
+
+        res.status(200).json(piece);
+    } catch(err)
+    {
+        console.log(err);
+        res.status(500).json({ error: "Internal server error." });
+    }
+});
 
 //Delete art piece
 router.delete("/:ID", ensureAuth, requireRole("Artist", "Owner"), ensureOwnsArtPiece, async (req, res) => {
