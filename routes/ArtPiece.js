@@ -4,7 +4,7 @@ const { ArtPiece, Artist, Exhibition, Gallery } = require("../models");
 const { ensureAuth, requireRole, ensureOwnsArtPiece } = require("../middleware/auth");
 
 //Get all art pieces and their assigned exhibitions
-router.get("/", ensureAuth ,async (req, res) => {
+router.get("/", ensureAuth , async (req, res) => {
     try {
         const pieces = await ArtPiece.findAll({ include: [Artist, Exhibition] });
         res.status(200).json(pieces);
@@ -106,7 +106,10 @@ router.delete("/:ID", ensureAuth, requireRole("Artist", "Owner"), ensureOwnsArtP
 
         await ArtPiece.destroy({ where: { ID: req.params.ID } });
 
-        res.status(200).json({ message: "Art piece deleted successfully" });
+        const ArtistID = req.session.user?.ArtistID;
+        const pieces = await ArtPiece.findAll({ where: { ArtistID }}, { include: [Artist, Gallery, Exhibition] });
+
+        res.status(200).json(pieces); //returns updated list(array) of art pieces
     } catch(err)
     {
         console.log(err);

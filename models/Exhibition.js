@@ -46,6 +46,11 @@ module.exports = (sequelize, DataTypes) => {
         Exhibition.hasMany(models.Registration, {
             foreignKey: "ExhibitionID"
         });
+        Exhibition.belongsTo(models.Gallery, {
+            foreignKey: "GalleryID",
+            as: "Gallery",
+            onDelete: "SET NULL"
+        });
     };
 
     return Exhibition;

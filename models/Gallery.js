@@ -34,11 +34,11 @@ module.exports = (sequelize, DataTypes) => {
             onDelete: "CASCADE"
         });
 
-        // Gallery.belongsTo(models.User, {
-        //     foreignKey: "OwnerID",
-        //     as: "Owner",
-        //     onDelete: "SET NULL"
-        // });
+        Gallery.belongsTo(models.User, {
+            foreignKey: "OwnerID",
+            as: "Owner",
+            onDelete: "SET NULL"
+        });
     };
 
     return Gallery;

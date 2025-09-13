@@ -1,12 +1,16 @@
 const express = require("express");
 const router = express.Router();
-const { Gallery, Exhibition, User } = require("../models");
+const { Gallery, Exhibition, User, ArtPiece, Artist } = require("../models");
+const { ensureAuth, requireRole, ensureOwnsArtPiece } = require("../middleware/auth");
+
 
 //Get all galleries
-router.get("/", async (req, res) => {
+router.get("/", ensureAuth, async (req, res) => {
     try {
-        const galleries = await Gallery.findAll({ include: [User, Exhibition] });
+
+        const galleries = await Gallery.findAll({ where: { OwnerID: req.session.user?.ID }, include: [{ model: User, as: "Owner"}, { model: Exhibition, as: "Exhibitions"}, { model: ArtPiece, as: "Artpieces" }] });
         res.status(200).json(galleries);
+
     } catch(err)
     {
         console.log(err);
@@ -14,11 +18,55 @@ router.get("/", async (req, res) => {
     }
 });
 
+//Create gallery
+router.post("/new", ensureAuth, requireRole("Owner"), async (req, res) => {
+    try {
+        //Checking provided parameter
+        const { UserID, ...galleryData } = req.body;
+
+        //checking if associated User(Owner) exists
+        const owner = await User.findByPk(UserID);
+        if (!owner)
+        {
+            return res.status(404).json({ error: "Associated Owner not found."});
+        }
+        //TODO: Include manager validations
+        //Creating new Gallery
+        const gallery = await Gallery.create({
+            OwnerID: UserID,
+            ...galleryData
+        });
+
+        const galleries = await Gallery.findAll({ where: { OwnerID: owner.ID }, include: [{ model: User, as: "Owner"}, { model: Exhibition, as: "Exhibitions"}, { model: ArtPiece, as: "Artpieces" }] });
+        
+        res.status(201).json(galleries);
+    } catch(err)
+    {
+        console.log(err);
+        res.status(400).json({ error: "Internal server error/ Bad request." });
+    }
+});
+
+//Update gallery
+router.put("/update/:ID", ensureAuth, requireRole("Owner"), async (req, res) => {
+    try {
+        await Gallery.update(req.body, { where: { ID: req.params.ID } });
+
+        const updatedGalleries = await Gallery.findAll({ where: { OwnerID: req.session.user?.ID }, include: [{ model: User, as: "Owner"}, { model: Exhibition, as: "Exhibitions"}, { model: ArtPiece, as: "Artpieces" }] });
+
+        res.status(200).json(updatedGalleries);
+    } catch(err)
+    {
+        console.log(err);
+        res.status(400).json({ error: "Internal server error/ Bad request." });
+    }
+});
 
 //Get gallery by ID
-router.get("/:ID", async (req, res) => {
+router.get("/:ID", ensureAuth, requireRole("Owner"), async (req, res) => {
     try {
-        const gallery = await Gallery.findByPk(req.params.ID, { include: [User, Exhibition] });
+        const gallery = await Gallery.findByPk({ where: {ID: req.params.ID }, include: [{ model: User, as: "Owner"}, { model: Exhibition, as: "Exhibitions"}, { model: ArtPiece, as: "Artpieces" }] });
+
         if (!gallery) return res.status(404).json({ error: "Gallery not found" });
         res.status(200).json(gallery);
     } catch(err)
@@ -28,58 +76,26 @@ router.get("/:ID", async (req, res) => {
     }
 });
 
-
-//Create gallery
-router.post("/", async (req, res) => {
-    try {
-        //Checking provided parameter
-        const { OwnerID, ...galleryData } = req.body;
-        if (!OwnerID)
-        {
-            return res.status(400).json({ error: "OwnerID is required."});
-        }
-
-        //checking if associated User(Owner) exists
-        const owner = await User.findByPk(OwnerID, { where: { Role: "Owner" }});
-        if (!owner)
-        {
-            return res.status(404).json({ error: "Associated Owner not found."});
-        }
-
-        //Creating new Gallery
-        const gallery = await Gallery.create({
-            OwnerID,
-            ...galleryData
-        });
-        
-        res.status(201).json(gallery);
-    } catch(err)
-    {
-        console.log(err);
-        res.status(400).json({ error: "Internal server error/ Bad request." });
-    }
-});
-
-//Update gallery
-router.put("/:ID", async (req, res) => {
-    try {
-        await Gallery.update(req.body, { where: { ID: req.params.ID } });
-        res.status(200).json({ message: "Gallery updated successfully" });
-    } catch(err)
-    {
-        console.log(err);
-        res.status(400).json({ error: "Internal server error/ Bad request." });
-    }
-});
+//consider making a get my galleries function
 
 // Delete gallery
-router.delete("/:ID", async (req, res) => {
+router.delete("/:ID", ensureAuth, requireRole("Owner"), async (req, res) => {
     try {
+        const gallery = await Gallery.findByPk(req.params.ID);
+
+        if(!gallery)
+        {
+            return res.status(404).json({ error: "Gallery not found."});
+        }
+
         await Gallery.destroy({ where: { ID: req.params.ID } });
-        res.status(200).json({ message: "Gallery deleted successfully" });
+
+        const galleries = await Gallery.findAll({ where: { OwnerID: req.session.user?.ID }, include: [{ model: User, as: "Owner"}, { model: Exhibition, as: "Exhibitions"}, { model: ArtPiece, as: "Artpieces" }] });
+
+        res.status(200).json(galleries); //returns updated list(array) of galleries
     } catch(err)
     {
-        consoler.log(err);
+        console.log(err);
         res.status(400).json({ error: "Internal server error/ Bad request." });
     }
 });
