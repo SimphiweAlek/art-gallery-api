@@ -34,7 +34,7 @@ app.use(session({
 		httpOnly: true,
 		sameSite: "lax",
 		secure: false, //using http not httpS
-		maxAge: 1000*60*5, //10 minutes session length
+		maxAge: 6000*60*5, //60 minutes session length
 	}
 }));
 
@@ -42,6 +42,7 @@ app.use(session({
 app.post("/auth/register", authController.register);
 app.post("/auth/login", authController.login);
 app.post("/auth/logout", authController.logout);
+app.put(`/auth/update/:ID`, authController.update);
 app.get("/auth/me", authController.me);
 
 //Model routes

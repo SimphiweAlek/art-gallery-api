@@ -6,7 +6,12 @@ const { Artist, ArtPiece, User } = require("../models");
 router.get("/", async (req, res) => {
     try {
         const artists = await Artist.findAll({ include: [ArtPiece, User] });
-        res.status(200).json(artists);
+        const mergedUsers = artists.map(artist => {
+            const { User, ...rest } = artist.toJSON();
+            return { ...rest, ...User }; // merging User fields to artist at root
+        });
+
+        res.status(200).json(mergedUsers);
     } catch(err)
     {
         console.log(err);
@@ -14,7 +19,7 @@ router.get("/", async (req, res) => {
     }
 });
 
-//Create artist profile
+//Create artist profile (This will probably never be used, as this functionalit is ran through authController)
 router.post("/", async (req, res) => {
     try {
         const { UserID, ...artistData } = req.body;
@@ -45,11 +50,20 @@ router.post("/", async (req, res) => {
     }
 });
 
-//Update artist
+//get by ID
+
+//Update artist (Probably won't be used, all users get updated through authController)
 router.put("/:ID", async (req, res) => {
     try {
         await Artist.update(req.body, { where: { ID: req.params.ID } });
-        res.status(200).json({ message: "Artist updated successfully" });
+
+        const artists = await Artist.findAll({ include: [ArtPiece, User] });
+        const mergedUsers = artists.map(artist => {
+            const { User, ...rest } = artist.toJSON();
+            return { ...rest, ...User }; // merging User fields to artist at root
+        });
+
+        res.status(200).json(mergedUsers); //return updated array of artists
     } catch(err)
     {
         console.log(err);
@@ -60,9 +74,16 @@ router.put("/:ID", async (req, res) => {
 //Delete artist
 router.delete("/:ID", async (req, res) => {
     try {
-        //TODO: Include deletion from the higher User table
-        await Artist.destroy({ where: { ID: req.params.ID } });
-        res.status(200).json({ message: "Artist deleted successfully" });
+        //TODO: Include deletion from the higher User table (fetch and delete by associated UserID)
+        await User.destroy({ where: { ID: req.params.ID } });
+
+        const artists = await Artist.findAll({ include: [ArtPiece, User] });
+        const mergedUsers = artists.map(artist => {
+            const { User, ...rest } = artist.toJSON();
+            return { ...rest, ...User }; // merging User fields to artist at root
+        });
+
+        res.status(200).json(mergedUsers);
     } catch(err)
     {
         console.log(err);

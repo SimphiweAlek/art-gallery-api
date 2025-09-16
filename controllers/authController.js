@@ -4,9 +4,10 @@ const { User, Artist } = require("../models");
 //Register function for all users
 const register = async (req, res) => {
     try {
-        const { FullName, Email, Phone, Password, Role } = req.body;
+        const { FullName, Email, Phone, Password, Role, Bio, Nationality } = req.body;
 
-        if (!Email || !Password || !FullName || !Phone || !Role) {
+        if (!Email || !FullName || !Phone || !Role)
+        {
 			return res.status(400).json({ error: "Missing field! Please check all your input and try again." });
 		}
         
@@ -16,8 +17,9 @@ const register = async (req, res) => {
         {
             res.status(400).json({ error: "User already exists."});
         }
-        //else...
-        const hashedPass = await bcrypt.hash(Password, 10);
+        
+        const hashedPass = await bcrypt.hash(Password || "admin", 10); //Sets a temporary default password if it was not provided (User was probably created by the owner)
+
         const user = await User.create({
             FullName,
             Email,
@@ -33,17 +35,14 @@ const register = async (req, res) => {
         {
             artist = await Artist.create({
                 UserID: user.ID,
-                Bio: "",    //To modify later
-                Nationality: ""
+                Bio: Bio,
+                Nationality: Nationality
             });
         }
+
+        const newUser = await User.findOne({ where: { Email }, include: [Artist] });
         
-        res.status(201).json({
-            message: "User registered successfully",
-            id: user.ID,
-            role: Role,
-            ArtistID: artist ? artist.ID : null
-        });
+        res.status(201).json(newUser);
     } catch(err)
     {
         console.error(err);
@@ -87,6 +86,50 @@ const login = async (req, res) => {
     }
 };
 
+//update user information
+const update = async (req, res) => {
+
+    try {
+        const { ID } = req.params;
+        const { FullName, Email, Phone, Role, Bio, Nationality } = req.body;
+
+        const user = await User.findByPk(ID);
+        if (!user) 
+        {
+            return res.status(404).json({ error: "User not found." });
+        }
+
+        await user.update({
+            FullName,
+            Email,
+            Phone,
+            Role
+        });
+
+        if (user.Role === "Artist")
+        {
+            let artist = await Artist.findOne({ where: { UserID: user.ID }});
+
+            if (artist)
+            {
+                await artist.update({
+                    Bio: Bio,
+                    Nationality: Nationality
+                });
+            }
+        }
+
+        const updated = await User.findAll({ include: [Artist] });
+
+        res.status(200).json(updated);
+
+    } catch (err)
+    {
+        console.error(err);
+        res.status(500).json({ error: "INternal server error."});
+    }
+};
+
 //logout or end session
 const logout = (req, res) => {
     req.session.destroy(() => {
@@ -101,4 +144,4 @@ const me = (req, res) => {
     return res.json({ user: req.session.user });
 };
 
-module.exports = { register, login, logout, me };
+module.exports = { register, login, logout, update, me };

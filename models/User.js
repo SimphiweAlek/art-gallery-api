@@ -48,7 +48,6 @@ module.exports = (sequelize, DataTypes) => {
         //If user in an Artist
         User.hasMany(models.Artist, {
             foreignKey: "UserID",
-            as: "ArtistProfile",
             onDelete: "CASCADE"
         });
 
@@ -66,7 +65,7 @@ module.exports = (sequelize, DataTypes) => {
             onDelete: "CASCADE"
         });
 
-        //CONSIDER A ROLES TABLE!!
+        //TODO: CONSIDER A ROLES TABLE!!
     };
 
     return User;

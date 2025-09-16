@@ -21,6 +21,11 @@ module.exports = (sequelize, DataTypes) => {
             foreignKey: "ArtistID",
             onDelete: "CASCADE"
         });
+
+        Artist.belongsTo(models.User, {
+            foreignKey: "UserID",
+            onDelete: "SET NULL"
+        });
     };
 
     return Artist;

@@ -35,7 +35,14 @@ module.exports = (sequelize, DataTypes) => {
     ArtPiece.associate = models => {
         ArtPiece.belongsTo(models.Artist, 
             {
-                foreignKey: "ArtistID"
+                foreignKey: "ArtistID",
+                onDelete: "CASCADE"
+            }
+        );
+        ArtPiece.belongsTo(models.Gallery,
+            {
+                foreignKey: "GalleryID",
+                allowNull: true,
             }
         );
         ArtPiece.belongsToMany(models.Exhibition,
