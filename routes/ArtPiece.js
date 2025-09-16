@@ -6,7 +6,16 @@ const { ensureAuth, requireRole, ensureOwnsArtPiece } = require("../middleware/a
 //Get all art pieces and their assigned exhibitions
 router.get("/", ensureAuth , async (req, res) => {
     try {
-        const pieces = await ArtPiece.findAll({ include: [Artist, Exhibition] });
+        const user = req.user; //from auth
+
+        //If user is an artist, we'll use this clause to return only their pieces, else we return all pieces
+        let whereClause = {};
+        if (user.Role === "Artist")
+        {
+            whereClause = { ArtistID: user.ID };
+        }
+
+        const pieces = await ArtPiece.findAll({ where: whereClause, include: [Artist, Gallery, Exhibition] });
         res.status(200).json(pieces);
     } catch(err)
     {
@@ -18,6 +27,7 @@ router.get("/", ensureAuth , async (req, res) => {
 //Create new art piece
 router.post("/new", ensureAuth, requireRole("Artist", "Owner") ,async (req, res) => {
     try {
+        const user = req.user;
 
         //Checking provided parameter
         const { ArtistID, ...artPieceData } = req.body;
@@ -25,22 +35,29 @@ router.post("/new", ensureAuth, requireRole("Artist", "Owner") ,async (req, res)
         {
             return res.status(400).json({ error: "ArtistID is required."});
         }
+
+        let assignedArtistID = ArtistID;
+        if (user.Role === "Artist")
+        {
+            assignedArtistID = user.ID; //making sure their ID is enforced if user is an Artist
+        }
+
         //Checking if the associated artist exists
-        const artist = await Artist.findByPk(ArtistID);
+        const artist = await Artist.findByPk(assignedArtistID);
         if (!artist) 
         {
             return res.status(404).json({ error: "Associated Artist not found."});
         }
 
-        req.session.user.ArtistID = ArtistID; //update session cache if artist existss
+        req.session.user.ArtistID = assignedArtistID; //update session cache if artist existss
 
         //Creating new Art Piece
         const newPiece = await ArtPiece.create({
-            ArtistID,
+            ArtistID: assignedArtistID,
             ...artPieceData
         });
 
-        res.status(201).json(newPiece);
+        res.status(201).json(newPiece); //TODO: consider returning the entire array of pieces
     } catch(err)
     {
         console.log(err);
@@ -51,9 +68,18 @@ router.post("/new", ensureAuth, requireRole("Artist", "Owner") ,async (req, res)
 //Update art piece
 router.put("/update/:ID", ensureAuth, requireRole("Artist", "Owner", "Clerk"), async (req, res) => {
     try {
-        await ArtPiece.update(req.body, { where: { ID: req.params.ID } });
+        const user = req.user;
+        const { ID } = req.params;
 
-        const ArtistID = req.session.user?.ArtistID;
+        const artPiece = await ArtPiece.findByPk(ID);
+        if (!artPiece) return res.status(404).json({ error: "ArtPiece not found" });
+
+        // Only Owners can reassign artists to artworks, Artists cannot
+        if (user.Role !== "Owner") delete req.body.ArtistID
+
+        await artPiece.update(req.body);
+
+        const ArtistID = req.session.user?.ArtistID; //If logged in user is an Artist, return only their art pieces below, else all of them
 
         const updatedPieces = await ArtPiece.findAll({ where: { ArtistID }}, { include: [Artist, Gallery, Exhibition] });
         res.status(200).json(updatedPieces);
