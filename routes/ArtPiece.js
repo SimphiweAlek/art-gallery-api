@@ -6,7 +6,7 @@ const { ensureAuth, requireRole, ensureOwnsArtPiece } = require("../middleware/a
 //Get all art pieces and their assigned exhibitions
 router.get("/", ensureAuth , async (req, res) => {
     try {
-        const user = req.user; //from auth
+        const user = req.session.user; //from auth
 
         //If user is an artist, we'll use this clause to return only their pieces, else we return all pieces
         let whereClause = {};
@@ -27,7 +27,7 @@ router.get("/", ensureAuth , async (req, res) => {
 //Create new art piece
 router.post("/new", ensureAuth, requireRole("Artist", "Owner") ,async (req, res) => {
     try {
-        const user = req.user;
+        const user = req.session.user;
 
         //Checking provided parameter
         const { ArtistID, ...artPieceData } = req.body;
@@ -68,7 +68,7 @@ router.post("/new", ensureAuth, requireRole("Artist", "Owner") ,async (req, res)
 //Update art piece
 router.put("/update/:ID", ensureAuth, requireRole("Artist", "Owner", "Clerk"), async (req, res) => {
     try {
-        const user = req.user;
+        const user = req.session.user;
         const { ID } = req.params;
 
         const artPiece = await ArtPiece.findByPk(ID);

@@ -48,7 +48,6 @@ module.exports = (sequelize, DataTypes) => {
         });
         Exhibition.belongsTo(models.Gallery, {
             foreignKey: "GalleryID",
-            as: "Gallery",
             onDelete: "SET NULL"
         });
     };

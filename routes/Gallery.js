@@ -8,7 +8,7 @@ const { ensureAuth, requireRole, ensureOwnsArtPiece } = require("../middleware/a
 router.get("/", ensureAuth, async (req, res) => {
     try {
 
-        const galleries = await Gallery.findAll({ where: { OwnerID: req.session.user?.ID }, include: [{ model: User, as: "Owner"}, { model: Exhibition, as: "Exhibitions"}, { model: ArtPiece, as: "Artpieces" }] });
+        const galleries = await Gallery.findAll({ where: { UserID: req.session.user?.ID }, include: [User, Exhibition, ArtPiece] });
         res.status(200).json(galleries);
 
     } catch(err)
@@ -33,11 +33,11 @@ router.post("/new", ensureAuth, requireRole("Owner"), async (req, res) => {
         //TODO: Include manager validations
         //Creating new Gallery
         const gallery = await Gallery.create({
-            OwnerID: UserID,
+            UserID,
             ...galleryData
         });
 
-        const galleries = await Gallery.findAll({ where: { OwnerID: owner.ID }, include: [{ model: User, as: "Owner"}, { model: Exhibition, as: "Exhibitions"}, { model: ArtPiece, as: "Artpieces" }] });
+        const galleries = await Gallery.findAll({ where: { UserID: owner.ID }, include: [User, Exhibition, ArtPiece] });
         
         res.status(201).json(galleries);
     } catch(err)

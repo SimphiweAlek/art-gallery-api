@@ -32,18 +32,16 @@ module.exports = (sequelize, DataTypes) => {
     User.associate = models => {
         //If user is an Owner
         User.hasMany(models.Gallery, {
-            foreignKey: "OwnerID",
-            as: "OwnedGalleries",
+            foreignKey: "UserID",
             onDelete: "CASCADE"
         });
 
         //Might not need this association. Can be checked by Role instead.
         //If user is a Manager (Monitors/Reports on Artpieces and Exhibitions)
-        User.hasMany(models.Gallery, {
-            foreignKey: "ManagerID", //Accesses Exhibition & ArtPiece models trhough gallery model
-            as: "ManagedGalleries",
-            onDelete: "SET NULL"
-        })
+        // User.hasMany(models.Gallery, {
+        //     foreignKey: "ManagerID", //Accesses Exhibition & ArtPiece models trhough gallery model
+        //     onDelete: "SET NULL"
+        // })
 
         //If user in an Artist
         User.hasMany(models.Artist, {
@@ -61,7 +59,6 @@ module.exports = (sequelize, DataTypes) => {
         //Notifications
         User.hasMany(models.Notification, {
             foreignKey: "UserID",
-            as: "Notifications",
             onDelete: "CASCADE"
         });
 

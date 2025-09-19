@@ -32,7 +32,7 @@ module.exports = (sequelize, DataTypes) => {
         });
 
         Gallery.belongsTo(models.User, {
-            foreignKey: "OwnerID",
+            foreignKey: "UserID",
             onDelete: "SET NULL"
         });
     };
