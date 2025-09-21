@@ -11,7 +11,7 @@ router.get("/", async (req, res) => {
             return { ...rest, ...User }; // merging User fields to artist at root
         });
 
-        res.status(200).json(mergedUsers);
+        res.status(200).json(artists);
     } catch(err)
     {
         console.log(err);
@@ -63,7 +63,7 @@ router.put("/:ID", async (req, res) => {
             return { ...rest, ...User }; // merging User fields to artist at root
         });
 
-        res.status(200).json(mergedUsers); //return updated array of artists
+        res.status(200).json(artists); //return updated array of artists
     } catch(err)
     {
         console.log(err);
@@ -83,7 +83,7 @@ router.delete("/:ID", async (req, res) => {
             return { ...rest, ...User }; // merging User fields to artist at root
         });
 
-        res.status(200).json(mergedUsers);
+        res.status(200).json(artists);
     } catch(err)
     {
         console.log(err);

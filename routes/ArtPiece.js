@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { ArtPiece, Artist, Exhibition, Gallery } = require("../models");
+const { ArtPiece, Artist, Exhibition, Gallery, User } = require("../models");
 const { ensureAuth, requireRole, ensureOwnsArtPiece } = require("../middleware/auth");
 
 //Get all art pieces and their assigned exhibitions
@@ -15,7 +15,22 @@ router.get("/", ensureAuth , async (req, res) => {
             whereClause = { ArtistID: user.ID };
         }
 
-        const pieces = await ArtPiece.findAll({ where: whereClause, include: [Artist, Gallery, Exhibition] });
+        const pieces = await ArtPiece.findAll({ 
+            where: whereClause, 
+            include: [
+                {
+                    model: Artist,
+                    include: [User]
+                },
+                {
+                    model: Gallery,
+                }
+                // {
+                //     model: Exhibition
+                // }
+            ] 
+        });
+
         res.status(200).json(pieces);
     } catch(err)
     {
@@ -81,7 +96,18 @@ router.put("/update/:ID", ensureAuth, requireRole("Artist", "Owner", "Clerk"), a
 
         const ArtistID = req.session.user?.ArtistID; //If logged in user is an Artist, return only their art pieces below, else all of them
 
-        const updatedPieces = await ArtPiece.findAll({ where: { ArtistID }}, { include: [Artist, Gallery, Exhibition] });
+        const updatedPieces = await ArtPiece.findAll({
+            where: { ArtistID },
+            include: [
+                    {
+                        model: Artist,
+                        include: [User]
+                    },
+                    {
+                        model: Gallery,
+                    }
+            ] 
+        });
         res.status(200).json(updatedPieces);
     } catch(err)
     {
@@ -97,7 +123,18 @@ router.get("/my", ensureAuth, requireRole("Artist"), async (req, res) => {
         const ArtistID = req.session.user?.ArtistID;
         if (!ArtistID) return res.status(404).json({ message: "Artist not found or not logged in." });
 
-        const pieces = await ArtPiece.findAll({ where: { ArtistID }}, { include: [Artist, Gallery, Exhibition] });
+        const pieces = await ArtPiece.findAll({ 
+            where: { ArtistID },
+            include: [
+                {
+                    model: Artist,
+                    include: [User]
+                },
+                {
+                    model: Gallery,
+                }
+            ]
+        });
 
         res.status(200).json(pieces);
     } catch (err){
@@ -110,7 +147,17 @@ router.get("/my", ensureAuth, requireRole("Artist"), async (req, res) => {
 router.get("/:ID", ensureAuth, async (req, res) => {
     try {
         console.log("Single artpiece fetch triggered.");
-        const piece = await ArtPiece.findByPk(req.params.ID, { include: [Artist, Exhibition] });
+        const piece = await ArtPiece.findByPk(req.params.ID, {
+            include: [
+                {
+                    model: Artist,
+                    include: [User]
+                },
+                {
+                    model: Gallery,
+                }
+            ] 
+          });
         if (!piece) return res.status(404).json({ error: "Art piece not found" });
 
         res.status(200).json(piece);
@@ -133,7 +180,18 @@ router.delete("/:ID", ensureAuth, requireRole("Artist", "Owner"), ensureOwnsArtP
         await ArtPiece.destroy({ where: { ID: req.params.ID } });
 
         const ArtistID = req.session.user?.ArtistID;
-        const pieces = await ArtPiece.findAll({ where: { ArtistID }}, { include: [Artist, Gallery, Exhibition] });
+        const pieces = await ArtPiece.findAll({ 
+            where: { ArtistID },
+            include: [
+                {
+                    model: Artist,
+                    include: [User]
+                },
+                {
+                    model: Gallery,
+                }
+            ]
+        });
 
         res.status(200).json(pieces); //returns updated list(array) of art pieces
     } catch(err)
