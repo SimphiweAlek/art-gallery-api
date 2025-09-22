@@ -44,7 +44,8 @@ module.exports = (sequelize, DataTypes) => {
             through: "ExhibitionArtPieces"
         });
         Exhibition.hasMany(models.Registration, {
-            foreignKey: "ExhibitionID"
+            foreignKey: "ExhibitionID",
+            onDelete: "CASCADE"
         });
         Exhibition.belongsTo(models.Gallery, {
             foreignKey: "GalleryID",

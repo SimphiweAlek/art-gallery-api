@@ -52,7 +52,7 @@ router.put("/update/:ID", ensureAuth, requireRole("Owner"), async (req, res) => 
     try {
         await Gallery.update(req.body, { where: { ID: req.params.ID } });
 
-        const updatedGalleries = await Gallery.findAll({ where: { OwnerID: req.session.user?.ID }, include: [{ model: User, as: "Owner"}, { model: Exhibition, as: "Exhibitions"}, { model: ArtPiece, as: "Artpieces" }] });
+        const updatedGalleries = await Gallery.findAll({ where: { OwnerID: req.session.user?.ID }, include: [User, Exhibition, ArtPiece,] });
 
         res.status(200).json(updatedGalleries);
     } catch(err)
@@ -65,7 +65,7 @@ router.put("/update/:ID", ensureAuth, requireRole("Owner"), async (req, res) => 
 //Get gallery by ID
 router.get("/:ID", ensureAuth, requireRole("Owner"), async (req, res) => {
     try {
-        const gallery = await Gallery.findByPk({ where: {ID: req.params.ID }, include: [{ model: User, as: "Owner"}, { model: Exhibition, as: "Exhibitions"}, { model: ArtPiece, as: "Artpieces" }] });
+        const gallery = await Gallery.findByPk({ where: {ID: req.params.ID }, include: [User, Exhibition, ArtPiece,] });
 
         if (!gallery) return res.status(404).json({ error: "Gallery not found" });
         res.status(200).json(gallery);
@@ -90,7 +90,7 @@ router.delete("/:ID", ensureAuth, requireRole("Owner"), async (req, res) => {
 
         await Gallery.destroy({ where: { ID: req.params.ID } });
 
-        const galleries = await Gallery.findAll({ where: { OwnerID: req.session.user?.ID }, include: [{ model: User, as: "Owner"}, { model: Exhibition, as: "Exhibitions"}, { model: ArtPiece, as: "Artpieces" }] });
+        const galleries = await Gallery.findAll({ where: { OwnerID: req.session.user?.ID }, include: [User, Exhibition, ArtPiece,] });
 
         res.status(200).json(galleries); //returns updated list(array) of galleries
     } catch(err)
