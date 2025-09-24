@@ -1,11 +1,20 @@
 const express = require("express");
 const router = express.Router();
 const { Exhibition, Gallery, ArtPiece } = require("../models");
+const { ensureAuth } = require("../middleware/auth");
 
 //Get all exhibitions
 router.get("/", async (req, res) => {
     try {
-        const exhibitions = await Exhibition.findAll({ include: [Gallery, ArtPiece] });
+        const exhibitions = await Exhibition.findAll({ 
+            include: [
+                { model: Gallery },
+                { 
+                    model: ArtPiece,
+                    through: { attributes: [] }
+                }
+            ] 
+        });
         res.status(200).json(exhibitions);
     } catch(err)
     {
@@ -17,7 +26,16 @@ router.get("/", async (req, res) => {
 //Get single exhibition
 router.get("/:ID", async (req, res) => {
     try {
-        const exhibition = await Exhibition.findByPk(req.params.ID, { include: [Gallery, ArtPiece] });
+        const exhibition = await Exhibition.findByPk(
+            req.params.ID,
+            { include: [
+                { model: Gallery },
+                { 
+                    model: ArtPiece,
+                    through: { attributes: [] }
+                }
+            ]
+        });
         if (!exhibition) return res.status(404).json({ error: "Exhibition not found" });
         res.status(200).json(exhibition);
     } catch(err)
@@ -56,6 +74,25 @@ router.post("/", async (req, res) => {
     {
         console.log(err);
         res.status(400).json({ error: "Internal server error." });
+    }
+});
+
+//Assign artworks rout
+router.post("/artworks/:ID", ensureAuth, async (req, res) => {
+    try {
+        const { ArtPieceIDs } = req.body;
+        const exhibition = await Exhibition.findByPk(req.params.ID);
+        if (!exhibition)
+        {
+            return res.status(404).json({ error: "Exhibition not found." });
+        }
+
+        await exhibition.setArtPieces(ArtPieceIDs);
+        res.status(200).json({ message: "Artworks assigned successfully." });
+    } catch (err)
+    {
+        console.log(err);
+        res.status(500).json({ error: "Internal server error." });
     }
 });
 

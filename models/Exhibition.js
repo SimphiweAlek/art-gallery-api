@@ -34,7 +34,7 @@ module.exports = (sequelize, DataTypes) => {
         },
         Status:{
             type: DataTypes.ENUM("Open", "Full", "Closed"),
-            defaultvalue: "Open"
+            defaultValue: "Open",
         }
 
     });
