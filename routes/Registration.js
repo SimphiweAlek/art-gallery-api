@@ -31,27 +31,48 @@ router.get("/:UserID/:ExhibitionID", async (req, res) => {
 
 
 //Create registration
-router.post("/", async (req, res) => {
+router.post("/", ensureAuth, async (req, res) => {
     try {
         //Checking provided parameter
-        const { UserID, ...regData } = req.body;
-        if(!UserID)
-        {
-            return res.status(400).json({ error: "UserID is required."});
-        }
+        const { ExhibitionID, numberOfAttendees = 1 } = req.body;
+        // if(!UserID)
+        // {
+        //     return res.status(400).json({ error: "UserID is required."});
+        // }
+        const userID = req.session.user.ID;
 
         //Checking if associated user exists
-        const user = await User.findByPk(UserID);
-        if(!user)
+        //const user = await User.findByPk(UserID);
+        if(!ExhibitionID)
         {
-            return res.status(404).json({ error: "Associated user does not exist."});
+            return res.status(400).json({ error: "Exhibition ID is required."});
+        }
+
+        const exhibition = await Exhibition.findByPk(ExhibitionID);
+        if (!exhibition) {
+            return res.status(404).json({ error: "Exhibition not found."})
+        }
+
+        //Checking exhibition availability
+        const availSpots = exhibition.MaxVisitors - exhibition.Count;
+        if (numberOfAttendees > availSpots)
+        {
+            return res.status(400).json({ error: `There is only ${availSpots} spots available.` });
         }
 
         //Creating new Registration
         const newReg = await Registration.create({
-            UserID,
-            ...regData
+            UserID: userID,
+            ExhibitionID: ExhibitionID,
+            numberOfAttendees: numberOfAttendees,
         });
+
+        //updating related exhibition
+        const newCount = exhibition.Count + numberOfAttendees;
+        await exhibition.update({
+            Count: newCount,
+            Status: newCount >= exhibition.MaxVisitors ? "Full" : "Open"
+        });        
         
         res.status(201).json(newReg);
     } catch(err)
@@ -72,7 +93,7 @@ router.put("/:UserID/attendees/:numberOfAttendees", async (req, res) => {
         res.status(200).json({ message: "Number of attendees updated" });
     } catch(err)
     {
-        consoler.log(err);
+        console.log(err);
         res.status(400).json({ error: "Internal server error/ Bad request." });
     }
 });
