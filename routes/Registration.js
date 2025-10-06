@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { Registration, Exhibition, User } = require("../models");
+const { ensureAuth, requireRole, ensureOwnsArtPiece } = require("../middleware/auth");
 
 //Get all registrations
 router.get("/", async (req, res) => {
