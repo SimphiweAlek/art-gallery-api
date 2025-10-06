@@ -99,6 +99,27 @@ router.put("/:UserID/attendees/:numberOfAttendees", async (req, res) => {
     }
 });
 
+//Check if user is registered for a specific exhibition
+router.get("/check/:exhibitionID", ensureAuth, async (req, res) => {
+    try {
+        const { exhibitionID } = req.params;
+        const userID = rgtieq.session.user.ID;
+
+        const existRegistration = await Registration.findOne({
+            where: {
+                UserID: userID,
+                ExhibitionID: exhibitionID
+            }
+        });
+
+        res.status(200).json({ isRegistered: !!existRegistration });
+    } catch (err)
+    {
+        console.error(err);
+        res.status(500).json({ error: "Internal server error." });
+    }
+});
+
 
 // Delete registration
 router.delete("/:ID", async (req, res) => {
