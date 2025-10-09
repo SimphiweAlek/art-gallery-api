@@ -53,11 +53,21 @@ const register = async (req, res) => {
 //Login function for all users
 const login = async (req, res) => {
     try {
-        const { Email, Password } = req.body;
+        const { Email, Password, client } = req.body;
         if (!Email || !Password) return res.status(400).json({ message: "Email & Password required."});
 
         const user = await User.findOne({ where: { Email } });
         if (!user) return res.status(404).json({ error: "User not found" });
+
+        //Role based access control for mobile and the web app
+        if (client === "mobile" && user.Role !== "Visitor")
+        {
+            return res.status(403).json({ error: "Access denied. Only Visitors can use the mobile app." });
+        }
+        if (client === "web" && user.Role === "Visitor")
+        {
+            return res.status(403).json({ error: "Access denied. Visitors can not log into the management panel."})
+        }
 
         const validPass = await bcrypt.compare(Password, user.Password);
         if(!validPass) return res.status(401).json({ error: "Invalid Password"});

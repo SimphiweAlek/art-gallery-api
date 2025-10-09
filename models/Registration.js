@@ -9,7 +9,6 @@ module.exports = (sequelize, DataTypes) => {
         numberOfAttendees: {
             type: DataTypes.INTEGER,
             allowNull: false,
-            defaultValue: 1
         },
         CheckedIn:{
             type: DataTypes.BOOLEAN,

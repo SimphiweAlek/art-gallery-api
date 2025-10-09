@@ -16,20 +16,26 @@ router.get("/", async (req, res) => {
 });
 
 
-//Get registration by UserID or ExhibitionID
-router.get("/:UserID/:ExhibitionID", async (req, res) => {
+//Check if user is registered for a specific exhibition
+router.get("/check/:exhibitionID", ensureAuth, async (req, res) => {
     try {
-        //TODO: Test the line line below! If does not work, consider assigning to req body instead
-        const reg = await Registration.findByPk({ where: { UserID: req.params.UserID} || { ExhibitionID: req.params.ExhibitionID },  include: [User, Exhibition] });
-        if (!reg) return res.status(404).json({ error: "Registration not found" });
-        res.status(200).json(reg);
-    } catch(err)
+        const { exhibitionID } = req.params;
+        const userID = req.session.user.ID;
+
+        const existRegistration = await Registration.findOne({
+            where: {
+                UserID: userID,
+                ExhibitionID: exhibitionID
+            }
+        });
+
+        res.status(200).json({ isRegistered: !!existRegistration });
+    } catch (err)
     {
-        console.log(err);
+        console.error(err);
         res.status(500).json({ error: "Internal server error." });
     }
 });
-
 
 //Create registration
 router.post("/", ensureAuth, async (req, res) => {
@@ -78,7 +84,7 @@ router.post("/", ensureAuth, async (req, res) => {
         res.status(201).json(newReg);
     } catch(err)
     {
-        consoler.log(err);
+        console.log(err);
         res.status(400).json({ error: "Internal server erro/ bad request." });
     }
 });
@@ -99,28 +105,6 @@ router.put("/:UserID/attendees/:numberOfAttendees", async (req, res) => {
     }
 });
 
-//Check if user is registered for a specific exhibition
-router.get("/check/:exhibitionID", ensureAuth, async (req, res) => {
-    try {
-        const { exhibitionID } = req.params;
-        const userID = rgtieq.session.user.ID;
-
-        const existRegistration = await Registration.findOne({
-            where: {
-                UserID: userID,
-                ExhibitionID: exhibitionID
-            }
-        });
-
-        res.status(200).json({ isRegistered: !!existRegistration });
-    } catch (err)
-    {
-        console.error(err);
-        res.status(500).json({ error: "Internal server error." });
-    }
-});
-
-
 // Delete registration
 router.delete("/:ID", async (req, res) => {
     try {
@@ -130,6 +114,20 @@ router.delete("/:ID", async (req, res) => {
     {
         console.log(err);
         res.status(400).json({ error: "Internal server error/ Bad request." });
+    }
+});
+
+//Get registration by UserID or ExhibitionID
+router.get("/:UserID/:ExhibitionID", async (req, res) => {
+    try {
+        //TODO: Test the line line below! If does not work, consider assigning to req body instead
+        const reg = await Registration.findByPk({ where: { UserID: req.params.UserID} || { ExhibitionID: req.params.ExhibitionID },  include: [User, Exhibition] });
+        if (!reg) return res.status(404).json({ error: "Registration not found" });
+        res.status(200).json(reg);
+    } catch(err)
+    {
+        console.log(err);
+        res.status(500).json({ error: "Internal server error." });
     }
 });
 
