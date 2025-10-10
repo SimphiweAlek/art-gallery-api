@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { Registration, Exhibition, User } = require("../models");
 const { ensureAuth, requireRole, ensureOwnsArtPiece } = require("../middleware/auth");
+const { sequelize } = require("../models");
 
 //Get all registrations
 router.get("/", async (req, res) => {
@@ -106,24 +107,67 @@ router.put("/:UserID/attendees/:numberOfAttendees", async (req, res) => {
 });
 
 // Delete registration
-router.delete("/:ID", async (req, res) => {
+router.delete("/:ID", ensureAuth, async (req, res) => {
+    const t = await sequelize.transaction(); //transaction to ensure all DB operations are executed as one block
     try {
-        await Registration.destroy({ where: { ID: req.params.ID } });
+        const regID = req.params.ID;
+        const user = req.session.user;
+
+        const reg = await Registration.findByPk(regID, {transaction: t});
+
+        if(!reg)
+        {
+            await t.rollback();
+            return res.status(404).json({ error: "Registration not found."});
+        }
+
+        //Role authorization TODO: double check who can't manage regs from management
+        const isStaff = ["Owner", "Manager", "Clerk"].includes(user.Role);
+        if(!isStaff && reg.UserID !== user.ID)
+        {
+            await t.rollback();
+            return res.status(403).json({ error: "You are not authorized to delete this registration."});
+        }
+
+        //locking related exhibition into transaction
+        const exhibition = await Exhibition.findByPk(reg.ExhibitionID, {
+            lock: t.LOCK.UPDATE,
+            transaction: t,
+        });
+
+        //updating related exhibition
+        if (exhibition)
+        {
+            const spotsToFree = reg.numberOfAttendees;
+            const newCount = exhibition.Count - spotsToFree;
+
+            await exhibition.update({
+                Count: newCount < 0 ? 0 : newCount, //count can't be negative(just in case)
+                Status: "Open",
+            }, { transaction: t });
+        }
+
+        //finally, deleting the registration and commiting transaction if all went well
+        await reg.destroy({ transaction: t });
+        await t.commit();
+
         res.status(200).json({ message: "Registration deleted successfully" });
     } catch(err)
     {
+        await t.rollback();
         console.log(err);
-        res.status(400).json({ error: "Internal server error/ Bad request." });
+        res.status(500).json({ error: "Internal server error" });
     }
 });
 
-//Get registration by UserID or ExhibitionID
-router.get("/:UserID/:ExhibitionID", async (req, res) => {
+//Get all registrations for the currently logged in user
+router.get("/my-registrations", ensureAuth, async (req, res) => {
     try {
-        //TODO: Test the line line below! If does not work, consider assigning to req body instead
-        const reg = await Registration.findByPk({ where: { UserID: req.params.UserID} || { ExhibitionID: req.params.ExhibitionID },  include: [User, Exhibition] });
-        if (!reg) return res.status(404).json({ error: "Registration not found" });
-        res.status(200).json(reg);
+        const userID = req.session.user.ID;
+
+        const myRegs = await Registration.findAll({ where: { UserID: userID},  include: [Exhibition], order: [[Exhibition, 'StartDate', 'ASC']] });
+        
+        res.status(200).json(myRegs);
     } catch(err)
     {
         console.log(err);

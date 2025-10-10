@@ -70,7 +70,7 @@ const login = async (req, res) => {
         }
 
         const validPass = await bcrypt.compare(Password, user.Password);
-        if(!validPass) return res.status(401).json({ error: "Invalid Password"});
+        if(!validPass) return res.status(403).json({ error: "Invalid Password"});
 
         //Attaching artist ID if user is an Artist
         let artist = null;
