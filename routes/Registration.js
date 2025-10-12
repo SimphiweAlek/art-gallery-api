@@ -91,18 +91,63 @@ router.post("/", ensureAuth, async (req, res) => {
 });
 
 //Update number of attendees
-router.put("/:UserID/attendees/:numberOfAttendees", ensureAuth, async (req, res) => {
+router.put("/:ID", ensureAuth, async (req, res) => {
+    const t = await sequelize.transaction();
+    
     try {
-        //NOTE: This means each user can only have one registartion on the system
-        await Registration.update(
-            { numberOfAttendees: req.params.numberOfAttendees },
-            { where: { UserID: req.params.UserID } }
-        );
-        res.status(200).json({ message: "Number of attendees updated" });
+        const { ID } = req.params;
+        const { numberOfAttendees } = req.body;
+        const user = req.session.user;
+
+        const registration = await Registration.findByPk( ID, { transaction: t });
+        if (!registration)
+        {
+            await t.rollback();
+            return res.status(404).json({ error: "Registration not found"});
+        }
+
+        //---Validations---
+        if (registration.UserID !== user.ID)
+        {
+            await t.rollback();
+            return res.status(403).json({ error: "You are not authorised to edit this registration."});
+        }
+
+        const exhibition = await Exhibition.findByPk(registration.ExhibitionID, {
+            lock: t.LOCK.UPDATE,
+            transaction: t,
+        });
+        if (!exhibition)
+        {
+            await t.rollback();
+            return res.status(404).json({ error: "Associated exhibition not found."});
+        }
+
+        const oldAttendees = registration.numberOfAttendees;
+        const newAttendees = parseInt(numberOfAttendees, 10);
+        const difference = newAttendees - oldAttendees; //will be negative or positive value
+        const newCount = exhibition.Count + difference; // || added here
+
+        if(newCount > exhibition.MaxVisitors)
+        {
+            await t.rollback();
+            const available = exhibition.MaxVisitors - exhibition.Count;
+            return res.status(400).json({ error: `Update failed. Only ${available} spots available.`});
+        }
+
+        //Updating registrations and exhibition
+        await registration.update({ numberOfAttendees: newAttendees }, { transaction: t });
+        await exhibition.update({ Count: newCount }, { transaction: t });
+
+        await t.commit();
+
+
+        res.status(200).json(registration);
     } catch(err)
     {
+        await t.rollback();
         console.log(err);
-        res.status(400).json({ error: "Internal server error/ Bad request." });
+        res.status(500).json({ error: "Internal server error/ Bad request." });
     }
 });
 
