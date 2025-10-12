@@ -6,6 +6,7 @@ require('dotenv').config();
 const sequelize = require('./config/database');
 const router = express.Router();
 const authController = require("./controllers/authController");
+const { ensureAuth } = require("./middleware/auth");
 //Some of the top imports may not be reuired here. Clean up code when everything's laid out
 
 const app = express();
@@ -42,8 +43,9 @@ app.use(session({
 app.post("/auth/register", authController.register);
 app.post("/auth/login", authController.login);
 app.post("/auth/logout", authController.logout);
-app.put(`/auth/update/:ID`, authController.update);
-app.get("/auth/me", authController.me);
+app.put(`/auth/update/:ID`, ensureAuth, authController.update);
+app.get("/auth/me", ensureAuth, authController.me);
+app.put("/auth/me/update", ensureAuth, authController.updateProfile);
 
 //Model routes
 app.use("/users", require("./routes/User"));

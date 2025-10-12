@@ -96,7 +96,7 @@ const login = async (req, res) => {
     }
 };
 
-//update user information
+//update user information (for web app, to be used by management and artists)
 const update = async (req, res) => {
 
     try {
@@ -140,6 +140,30 @@ const update = async (req, res) => {
     }
 };
 
+//update user profile (mobile/visitors)
+const updateProfile = async (req, res) => {
+    try {
+        const userID = req.session.user.ID;
+        const { FullName, Phone } = req.body; //TODO: consider including the user's password
+
+        const user = await User.findByPk(userID);
+        if(!user)
+        {
+            return res.status(404).json({ error: "User not found." });
+        }
+
+        //updating DB and current session
+        await user.update({ FullName, Phone });
+        req.session.user.FullName = user.FullName;
+
+        res.status(200).json(user);
+    } catch (err)
+    {
+        console.error(err);
+        res.status(500).json({ error: "Internal server error." });
+    }
+}
+
 //logout or end session
 const logout = (req, res) => {
     req.session.destroy(() => {
@@ -154,4 +178,4 @@ const me = (req, res) => {
     return res.json({ user: req.session.user });
 };
 
-module.exports = { register, login, logout, update, me };
+module.exports = { register, login, logout, update, me, updateProfile };
