@@ -4,7 +4,7 @@ const { Exhibition, Gallery, ArtPiece } = require("../models");
 const { ensureAuth } = require("../middleware/auth");
 
 //Get all exhibitions
-router.get("/", async (req, res) => {
+router.get("/", ensureAuth, async (req, res) => {
     try {
         const exhibitions = await Exhibition.findAll({ 
             include: [
@@ -47,7 +47,7 @@ router.get("/:ID", async (req, res) => {
 
 
 //Create exhibition
-router.post("/", async (req, res) => {
+router.post("/", ensureAuth, async (req, res) => {
     try {
         //Checking provided parameter
         const { GalleryID, ...exhibitionData} = req.body;
@@ -97,7 +97,7 @@ router.post("/artworks/:ID", ensureAuth, async (req, res) => {
 });
 
 //Update exhibition
-router.put("/:ID", async (req, res) => {
+router.put("/:ID", ensureAuth, async (req, res) => {
     try {
         await Exhibition.update(req.body, { where: { ID: req.params.ID } });
         res.status(200).json({ message: "Exhibition updated successfully" });
@@ -109,7 +109,7 @@ router.put("/:ID", async (req, res) => {
 });
 
 // Delete exhibition
-router.delete("/:ID", async (req, res) => {
+router.delete("/:ID", ensureAuth, async (req, res) => {
     try {
         await Exhibition.destroy({ where: { ID: req.params.ID } });
         res.status(200).json({ message: "Exhibition deleted successfully" });

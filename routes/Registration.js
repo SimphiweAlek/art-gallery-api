@@ -5,7 +5,7 @@ const { ensureAuth, requireRole, ensureOwnsArtPiece } = require("../middleware/a
 const { sequelize } = require("../models");
 
 //Get all registrations
-router.get("/", async (req, res) => {
+router.get("/", ensureAuth, async (req, res) => {
     try {
         const regs = await Registration.findAll({ include: [User, Exhibition] });
         res.status(200).json(regs);
@@ -91,7 +91,7 @@ router.post("/", ensureAuth, async (req, res) => {
 });
 
 //Update number of attendees
-router.put("/:UserID/attendees/:numberOfAttendees", async (req, res) => {
+router.put("/:UserID/attendees/:numberOfAttendees", ensureAuth, async (req, res) => {
     try {
         //NOTE: This means each user can only have one registartion on the system
         await Registration.update(
