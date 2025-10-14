@@ -90,6 +90,27 @@ router.post("/", ensureAuth, async (req, res) => {
     }
 });
 
+//Mark a visitor's registration as checkd-in
+router.put("/checkin/:ID", ensureAuth, async (req, res) => {
+    try {
+        const registration = await Registration.findByPk(req.params.ID);
+
+        if (!registration)
+        {
+            return res.status(404).json({ error: "Registration not found."});
+        }
+
+        registration.CheckedIn = true;
+        await registration.save();
+
+        res.status(200).json({ message: "Check-in successful.", registration });
+    } catch (err)
+    {
+        console.error(err);
+        res.status(500).json({ error: "Internal server error." });
+    }
+});
+
 //Update number of attendees
 router.put("/:ID", ensureAuth, async (req, res) => {
     const t = await sequelize.transaction();
