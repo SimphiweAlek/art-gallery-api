@@ -7,7 +7,7 @@ const { sequelize } = require("../models");
 //Get all registrations
 router.get("/", ensureAuth, async (req, res) => {
     try {
-        const regs = await Registration.findAll({ include: [User, Exhibition] });
+        const regs = await Registration.findAll({ include: [User, Exhibition], order: [[Exhibition, 'StartDate', 'ASC']] });
         res.status(200).json(regs);
     } catch(err)
     {
@@ -15,7 +15,6 @@ router.get("/", ensureAuth, async (req, res) => {
         res.status(500).json({ error: "Internal server error." });
     }
 });
-
 
 //Check if user is registered for a specific exhibition
 router.get("/check/:exhibitionID", ensureAuth, async (req, res) => {
