@@ -1,7 +1,50 @@
 const express = require("express");
 const router = express.Router();
+const multer = require('multer');
+const path = require('path');
 const { ArtPiece, Artist, Exhibition, Gallery, User } = require("../models");
 const { ensureAuth, requireRole, ensureOwnsArtPiece } = require("../middleware/auth");
+
+// --- Multer file management ---
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'public/uploads/'); //saving to 'public/uploads folder
+    },
+    filename: (req, file, cb) => {
+        //forcing unique file names to avoid overwrites
+        const uniqueSuffix = Date.now() + '_' + Math.round(Math.random() * 1E9);
+        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+const upload = multer({ storage: storage });
+
+//upload image for a specific artpiece. By Owner/Artist
+router.post("/upload-image/:ID", ensureAuth, requireRole("Owner", "Artist"), upload.single('artworkImage'), async (req, res) => {
+    try {
+        const artPiece = await ArtPiece.findByPk(req.params.ID);
+        if(!artPiece)
+        {
+            return res.status(404).json({ error: "Art piece not found." });
+        }
+
+        if(!req.file)
+        {
+            return res.status(400).json({ error: "No image file provided." });
+        }
+
+        //string URL to be saved in the DB
+        const imageURL = `/public/uploads/${req.file.filename}`;
+
+        await artPiece.update({ ImageURL: imageURL });
+
+        res.status(200).json({ message: "Image uploaded successfully.", artPiece });
+    } catch (err)
+    {
+        console.error(err);
+        res.status(500).json({ error: "Internal server error." });
+    }
+});
 
 //Get all art pieces and their assigned exhibitions
 router.get("/", ensureAuth , async (req, res) => {

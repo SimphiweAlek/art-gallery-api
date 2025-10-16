@@ -30,6 +30,10 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.ENUM("Available", "Unavailable"),
             defaultValue: "Available"
         },
+        ImageURL:{
+            type: DataTypes.STRING,
+            allowNull: true
+        },
     });
 
     ArtPiece.associate = models => {

@@ -7,9 +7,11 @@ const sequelize = require('./config/database');
 const router = express.Router();
 const authController = require("./controllers/authController");
 const { ensureAuth } = require("./middleware/auth");
+const path = require('path'); //will use this for image local storage
 //Some of the top imports may not be reuired here. Clean up code when everything's laid out
 
 const app = express();
+app.use('/public', express.static(path.join(__dirname, 'public'))); //makes any file on 'public' folder accessible by URL
 app.use(express.json()); //allows json type parsing
 app.use(cors({			//whitelists API
 	origin: ["http://localhost:5173"],
@@ -57,7 +59,7 @@ app.use("/notifications", require("./routes/Notification"));
 app.use("/registrations", require("./routes/Registration"));
 
 //Start API and listen...
-db.sequelize.sync().then(() => {
+db.sequelize.sync({ alter: true }).then(() => {
 	//TODO: Consider having an upload image feature for each artpiece, and one of the images assigned as the face of the exhibition
     app.listen(process.env.PORT, () => {
         console.log("Server running on port 3001...")

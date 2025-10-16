@@ -1,9 +1,52 @@
 const express = require("express");
 const router = express.Router();
+const multer = require('multer');
+const path = require('path');
+const { ensureAuth, requireRole } = require("../middleware/auth");
 const { Artist, ArtPiece, User } = require("../models");
 
+// --- Multer file management ---
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'public/uploads/'); //saving to 'public/uploads folder
+    },
+    filename: (req, file, cb) => {
+        //forcing unique file names to avoid overwrites
+        const uniqueSuffix = Date.now() + '_' + Math.round(Math.random() * 1E9);
+        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+const upload = multer({ storage: storage });
+
+//upload image for a specific artpiece. By Owner/Artist
+router.post("/upload-image/:ID", ensureAuth, upload.single('profileImage'), async (req, res) => {
+    try {
+        const artist = await Artist.findByPk(req.params.ID);
+        if(!artist)
+        {
+            return res.status(404).json({ error: "Artist not found." });
+        }
+
+        if (!req.file)
+        {
+            return res.status(400).json({ error: "No image file provided."});
+        }
+
+        //DB image URL and update
+        const imageURL = `/public/uploads/${req.file.filename}`;
+        await artist.update({ ProfileImageURL: imageURL });
+
+        res.status(200).json({ message: "Profile image updated successfully." });
+    } catch (err)
+    {
+        console.error(err);
+        res.status(500).json({ error: "Internal server error." });
+    }
+});
+
 //Get all artists + their art
-router.get("/", async (req, res) => {
+router.get("/", ensureAuth, async (req, res) => {
     try {
         const artists = await Artist.findAll({ include: [ArtPiece, User] });
         const mergedUsers = artists.map(artist => {
@@ -72,10 +115,10 @@ router.put("/:ID", async (req, res) => {
 });
 
 //Delete artist
-router.delete("/:ID", async (req, res) => {
+router.delete("/:ID", ensureAuth, async (req, res) => {
     try {
         //TODO: Include deletion from the higher User table (fetch and delete by associated UserID)
-        await User.destroy({ where: { ID: req.params.ID } });
+        await User.destroy({ where: { ID: req.params.ID } }); //this should cascade
 
         const artists = await Artist.findAll({ include: [ArtPiece, User] });
         const mergedUsers = artists.map(artist => {

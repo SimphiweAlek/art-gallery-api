@@ -13,7 +13,11 @@ module.exports = (sequelize, DataTypes) => {
         Nationality:{
             type: DataTypes.STRING,
             allowNull: true
-        }
+        },
+        ProfileImageURL:{
+            type: DataTypes.STRING,
+            allowNull: true
+        },
     });
 
     Artist.associate = models => {
