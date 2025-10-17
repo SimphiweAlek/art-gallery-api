@@ -28,21 +28,23 @@ const register = async (req, res) => {
             Role
         });
 
-        let artist = null;
+        //let artist = null;
 
         //if user is an artist, auto creating artist profile as well
         if (Role === "Artist")
         {
-            artist = await Artist.create({
-                UserID: user.ID,
+            await user.createArtist({
                 Bio: Bio,
                 Nationality: Nationality
             });
         }
 
-        const newUser = await User.findOne({ where: { Email }, include: [Artist] });
+        // const newUser = await User.findOne({ where: { Email }, include: [Artist] });
+        await user.reload({
+            include: [{ model: Artist }]
+        });
         
-        res.status(201).json(newUser);
+        res.status(201).json(user);
     } catch(err)
     {
         console.error(err);
@@ -96,7 +98,7 @@ const login = async (req, res) => {
     }
 };
 
-//update user information (for web app, to be used by management and artists)
+//update user information (for web app, to be used by management)
 const update = async (req, res) => {
 
     try {

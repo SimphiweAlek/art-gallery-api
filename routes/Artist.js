@@ -4,6 +4,7 @@ const multer = require('multer');
 const path = require('path');
 const { ensureAuth, requireRole } = require("../middleware/auth");
 const { Artist, ArtPiece, User } = require("../models");
+const { sequelize } = require("../models");
 
 // --- Multer file management ---
 const storage = multer.diskStorage({
@@ -20,7 +21,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 //upload image for a specific artpiece. By Owner/Artist
-router.post("/upload-image/:ID", ensureAuth, upload.single('profileImage'), async (req, res) => {
+router.post("/upload-image/:ID", upload.single('profileImage'), async (req, res) => {
     try {
         const artist = await Artist.findByPk(req.params.ID);
         if(!artist)
@@ -95,40 +96,74 @@ router.post("/", async (req, res) => {
 
 //get by ID
 
-//Update artist (Probably won't be used, all users get updated through authController)
+//Update artist
 router.put("/:ID", async (req, res) => {
     try {
-        await Artist.update(req.body, { where: { ID: req.params.ID } });
+        const { ID: artistId } = req.params;
+        const { FullName, Email, Phone, Bio, Nationality } = req.body;
 
-        const artists = await Artist.findAll({ include: [ArtPiece, User] });
-        const mergedUsers = artists.map(artist => {
-            const { User, ...rest } = artist.toJSON();
-            return { ...rest, ...User }; // merging User fields to artist at root
-        });
+        const artist = await Artist.findByPk(artistId);
+        if (!artist)
+        {
+            return res.status(404).json({ error: "Artist profile not found." });
+        }
 
-        res.status(200).json(artists); //return updated array of artists
+        const user = await User.findByPk(artist.UserID);
+        if (!user)
+        {
+            return res.status(404).json({ error: "Associated user account not found." });
+        }
+
+        //updating as a single block using a transaction
+        const transaction = await sequelize.transaction();
+        try {
+            await user.update({ FullName, Email, Phone }, { transaction });
+            await artist.update({ Bio, Nationality }, { transaction });
+            await transaction.commit();
+        } catch (err) {
+            await transaction.rollback();
+            throw err;
+        }
+
+        const updatedArtist = await User.findByPk(artist.UserID, { include: [Artist] });
+
+        res.status(200).json(updatedArtist); //return updated artist
     } catch(err)
     {
-        console.log(err);
+        console.log("Artist Update error: ", err);
         res.status(400).json({ error: "Internal server error." });
     }
 });
 
 //Delete artist
 router.delete("/:ID", ensureAuth, async (req, res) => {
+    const t = await sequelize.transaction();
     try {
-        //TODO: Include deletion from the higher User table (fetch and delete by associated UserID)
-        await User.destroy({ where: { ID: req.params.ID } }); //this should cascade
+        const artistID = req.params.ID;
+        const artist = await Artist.findByPk(artistID, { transaction: t });
+        if (!artist) 
+        {
+            await t.rollback();
+            return res.status(404).json({ error: "Artist not found." });
+        }
+
+        const userIdToDelete = artist.UserID;
+        await artist.destroy({ transaction: t });
+
+        if (userIdToDelete) 
+        {
+            await User.destroy({ where: { ID: userIdToDelete }, transaction: t });
+        }
+        // await User.destroy({ where: { ID: artist.UserID } }); //this should cascade
+
+        await t.commit();
 
         const artists = await Artist.findAll({ include: [ArtPiece, User] });
-        const mergedUsers = artists.map(artist => {
-            const { User, ...rest } = artist.toJSON();
-            return { ...rest, ...User }; // merging User fields to artist at root
-        });
 
         res.status(200).json(artists);
     } catch(err)
     {
+        await t.rollback();
         console.log(err);
         res.status(400).json({ error: "Internal server error." });
     }

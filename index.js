@@ -57,6 +57,7 @@ app.use("/exhibitions", require("./routes/Exhibition"));
 app.use("/galleries", require("./routes/Gallery"));
 app.use("/notifications", require("./routes/Notification"));
 app.use("/registrations", require("./routes/Registration"));
+app.use("/dashboard", require("./routes/dashboard"));
 
 //Start API and listen...
 db.sequelize.sync({ alter: true }).then(() => {

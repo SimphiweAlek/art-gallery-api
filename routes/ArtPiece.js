@@ -20,8 +20,9 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 //upload image for a specific artpiece. By Owner/Artist
-router.post("/upload-image/:ID", ensureAuth, requireRole("Owner", "Artist"), upload.single('artworkImage'), async (req, res) => {
+router.post("/upload-image/:ID", upload.single('artworkImage'), async (req, res) => {
     try {
+        //TODO: Handle role permissions
         const artPiece = await ArtPiece.findByPk(req.params.ID);
         if(!artPiece)
         {
@@ -95,10 +96,6 @@ router.post("/new", ensureAuth, requireRole("Artist", "Owner") ,async (req, res)
         }
 
         let assignedArtistID = ArtistID;
-        if (user.Role === "Artist")
-        {
-            assignedArtistID = user.ID; //making sure their ID is enforced if user is an Artist
-        }
 
         //Checking if the associated artist exists
         const artist = await Artist.findByPk(assignedArtistID);
@@ -156,6 +153,27 @@ router.put("/update/:ID", ensureAuth, requireRole("Artist", "Owner", "Clerk"), a
     {
         console.log(err);
         res.status(400).json({ error: "Internal server error." });
+    }
+});
+
+//update artpiece status*
+router.put("/status/:ID", requireRole("Owner", "Clerk"), async (req, res) => {
+    try {
+        const artPiece = await ArtPiece.findByPk(req.params.ID);
+        console.log(artPiece);
+        if (!artPiece) {
+            return res.status(404).json({ error: "Art piece not found." });
+        }
+        const { AvailStatus } = req.body;
+        if (!AvailStatus) {
+            return res.status(400).json({ error: "Status is required." });
+        }
+
+        await artPiece.update({ AvailStatus });
+        res.status(200).json(artPiece);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Internal server error." });
     }
 });
 

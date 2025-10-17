@@ -27,7 +27,7 @@ module.exports = (sequelize, DataTypes) => {
             allowNull: true
         },
         AvailStatus:{
-            type: DataTypes.ENUM("Available", "Unavailable"),
+            type: DataTypes.ENUM("Available", "Unavailable", "On Loan"),
             defaultValue: "Available"
         },
         ImageURL:{
